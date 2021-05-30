@@ -1,0 +1,19 @@
+#!/bin/sh
+
+export prefix=${PASSWORD_STORE_DIR-~/.password-store}
+
+account="$(find "$prefix" -type f -name '*.gpg' -print0 | \
+    xargs -I '{}' -0 sh -c 'f="{}"; f="${f#"$prefix"/}"; echo "${f%.gpg}"' | \
+    rofi -dmenu -p "Accounts:" -kb-custom-1 "Ctrl+i" -kb-custom-2 "Ctrl+o")"
+retv=$?
+
+if [ $retv -eq 10 ]
+then
+    pass show "$account" 2> /dev/null | grep -e "^login:" | cut -d' ' -f2 | xclip -sel clip
+    echo "Copied $account username to clipboard."
+elif [ $retv -eq 11 ]
+then
+    pass otp -c "$account" 2> /dev/null
+else
+    pass show -c "$account" 2> /dev/null
+fi
